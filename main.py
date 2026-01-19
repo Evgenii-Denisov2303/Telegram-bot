@@ -4,7 +4,9 @@ import logging.handlers
 import os
 
 import aiohttp
+from aiohttp import web
 from aiogram import Bot, Dispatcher
+from aiogram.client.default import DefaultBotProperties
 from aiogram.fsm.storage.memory import MemoryStorage
 
 from config_data.config import load_settings
@@ -39,7 +41,10 @@ async def main():
     timeout = aiohttp.ClientTimeout(total=10)
     session = aiohttp.ClientSession(timeout=timeout)
 
-    bot = Bot(token=settings.bot_token, parse_mode="HTML")
+    bot = Bot(
+        token=settings.bot_token,
+        default=DefaultBotProperties(parse_mode="HTML"),
+    )
     dp = Dispatcher(storage=MemoryStorage())
 
     dp["session"] = session
@@ -53,10 +58,29 @@ async def main():
 
     await set_default_commands(bot)
 
+    health_runner = await _start_healthcheck_server()
+
     try:
         await dp.start_polling(bot)
     finally:
         await session.close()
+        if health_runner:
+            await health_runner.cleanup()
+
+
+async def _start_healthcheck_server():
+    port = int(os.getenv("PORT", "8080"))
+    app = web.Application()
+
+    async def health(_request):
+        return web.Response(text="ok")
+
+    app.router.add_get("/", health)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, "0.0.0.0", port)
+    await site.start()
+    return runner
 
 
 if __name__ == "__main__":
