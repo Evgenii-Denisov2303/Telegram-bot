@@ -1,0 +1,102 @@
+from aiogram import Router, F
+from aiogram.types import CallbackQuery
+from aiogram.exceptions import TelegramBadRequest
+
+from database.db_setup import get_user_facts, update_user_facts
+from handlers.keyboards import facts_nav_keyboard
+from services.cat_fact_api import fetch_cat_fact
+from services.translate_api import translate_text
+
+
+router = Router()
+
+
+def _format_fact(original: str, translation: str | None) -> str:
+    if not translation:
+        return f"🇬🇧 {original}\n\n❌ Перевод временно недоступен"
+    return f"🇬🇧 {original}\n\n🇷🇺 {translation}"
+
+
+async def _show_fact(call: CallbackQuery, facts: list, current_index: int):
+    current = facts[current_index]
+    text = current.get("display_text") or _format_fact(
+        current.get("text", ""), current.get("translation")
+    )
+    markup = facts_nav_keyboard(
+        has_prev=current_index > 0,
+        has_next=current_index < len(facts) - 1,
+    )
+    try:
+        await call.message.edit_text(text, reply_markup=markup)
+    except TelegramBadRequest:
+        await call.message.answer(text, reply_markup=markup)
+
+
+@router.callback_query(F.data == "menu:facts")
+async def menu_facts(call: CallbackQuery, session, settings, cache):
+    fact = await fetch_cat_fact(session, settings, cache)
+    if not fact:
+        await call.message.answer(
+            "Не удалось получить факт. Попробуй чуть позже."
+        )
+        await call.answer()
+        return
+
+    translation = await translate_text(session, settings, cache, fact)
+    display_text = _format_fact(fact, translation)
+
+    data = await get_user_facts(call.from_user.id)
+    facts = data["facts"]
+    facts.append(
+        {
+            "text": fact,
+            "translation": translation,
+            "display_text": display_text,
+        }
+    )
+    current_index = len(facts) - 1
+    await update_user_facts(call.from_user.id, facts, current_index)
+
+    await _show_fact(call, facts, current_index)
+    await call.answer()
+
+
+@router.callback_query(F.data.in_({"facts:new", "facts:prev", "facts:next"}))
+async def facts_nav(call: CallbackQuery, session, settings, cache):
+    data = await get_user_facts(call.from_user.id)
+    facts = data["facts"]
+    current_index = data["current_index"]
+
+    if call.data == "facts:new":
+        fact = await fetch_cat_fact(session, settings, cache)
+        if not fact:
+            await call.answer("Не удалось получить факт.", show_alert=True)
+            return
+        translation = await translate_text(session, settings, cache, fact)
+        display_text = _format_fact(fact, translation)
+        facts.append(
+            {
+                "text": fact,
+                "translation": translation,
+                "display_text": display_text,
+            }
+        )
+        current_index = len(facts) - 1
+    elif call.data == "facts:prev" and current_index > 0:
+        current_index -= 1
+    elif call.data == "facts:next" and current_index < len(facts) - 1:
+        current_index += 1
+
+    if not facts:
+        await call.message.answer("Фактов пока нет. Нажми «Новый».")
+        await call.answer()
+        return
+
+    await update_user_facts(call.from_user.id, facts, current_index)
+    await _show_fact(call, facts, current_index)
+    await call.answer()
+
+
+@router.callback_query(F.data == "noop")
+async def noop(call: CallbackQuery):
+    await call.answer()
