@@ -6,6 +6,7 @@ from handlers.keyboards import (
     photos_menu_keyboard,
     fun_menu_keyboard,
     useful_menu_keyboard,
+    bottom_menu_keyboard,
 )
 from handlers.ui import edit_or_send, send_or_update_hub
 
@@ -30,23 +31,43 @@ HELP_TEXT = (
 )
 
 
+async def _ensure_bottom_menu(message: Message, reply_menu_users: set):
+    if message.from_user.id in reply_menu_users:
+        return
+    await message.answer(
+        "Кнопка «Меню» закреплена снизу.",
+        reply_markup=bottom_menu_keyboard(),
+    )
+    reply_menu_users.add(message.from_user.id)
+
+
 @router.message(CommandStart())
-async def start_command(message: Message, ui_state):
+async def start_command(message: Message, ui_state, reply_menu_users):
+    await _ensure_bottom_menu(message, reply_menu_users)
     await send_or_update_hub(message, WELCOME_TEXT, main_menu_keyboard(), ui_state)
 
 
 @router.message(Command("menu"))
-async def menu_command(message: Message, ui_state):
+async def menu_command(message: Message, ui_state, reply_menu_users):
+    await _ensure_bottom_menu(message, reply_menu_users)
     await send_or_update_hub(message, WELCOME_TEXT, main_menu_keyboard(), ui_state)
 
 
 @router.message(Command("help"))
-async def help_command(message: Message, ui_state):
+async def help_command(message: Message, ui_state, reply_menu_users):
+    await _ensure_bottom_menu(message, reply_menu_users)
     await send_or_update_hub(message, HELP_TEXT, main_menu_keyboard(), ui_state)
 
 
+@router.message(F.text == "Меню")
+async def menu_button(message: Message, ui_state, reply_menu_users):
+    await _ensure_bottom_menu(message, reply_menu_users)
+    await send_or_update_hub(message, WELCOME_TEXT, main_menu_keyboard(), ui_state)
+
+
 @router.message()
-async def fallback_message(message: Message, ui_state):
+async def fallback_message(message: Message, ui_state, reply_menu_users):
+    await _ensure_bottom_menu(message, reply_menu_users)
     await send_or_update_hub(
         message,
         "Я тут, но лучше выбрать раздел в меню 🙂",

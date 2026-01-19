@@ -1,4 +1,4 @@
-from aiogram.types import InlineKeyboardMarkup
+from aiogram.types import InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 
@@ -104,3 +104,11 @@ def back_to_menu_keyboard() -> InlineKeyboardMarkup:
     builder.button(text="⬅️ В меню", callback_data="menu:main")
     builder.adjust(1)
     return builder.as_markup()
+
+
+def bottom_menu_keyboard() -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        keyboard=[[KeyboardButton(text="Меню")]],
+        resize_keyboard=True,
+        selective=False,
+    )

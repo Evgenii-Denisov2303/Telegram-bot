@@ -52,6 +52,7 @@ async def main():
     dp["cache"] = AsyncCache(max_items=512)
     dp["semaphore"] = asyncio.Semaphore(10)
     dp["ui_state"] = {}
+    dp["reply_menu_users"] = set()
 
     for router in get_routers():
         dp.include_router(router)
