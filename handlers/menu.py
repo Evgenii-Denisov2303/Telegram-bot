@@ -2,7 +2,6 @@ from aiogram import Router, F
 from aiogram.filters import CommandStart, Command
 from aiogram.types import Message, CallbackQuery
 from handlers.keyboards import (
-    main_menu_keyboard,
     photos_menu_keyboard,
     fun_menu_keyboard,
     useful_menu_keyboard,
@@ -28,7 +27,7 @@ HELP_TEXT = (
     "• нажимай кнопки под сообщением\n"
     "• можно получать еще и еще без спама\n\n"
     "────────\n"
-    "Если потеряешься — просто жми «В меню»."
+    "Если потеряешься — жми кнопку внизу."
 )
 
 
@@ -42,19 +41,19 @@ async def _ensure_bottom_menu(message: Message, reply_menu_users: set):
 @router.message(CommandStart())
 async def start_command(message: Message, ui_state, reply_menu_users):
     await _ensure_bottom_menu(message, reply_menu_users)
-    await send_or_update_hub(message, WELCOME_TEXT, main_menu_keyboard(), ui_state)
+    await send_or_update_hub(message, WELCOME_TEXT, None, ui_state)
 
 
 @router.message(Command("menu"))
 async def menu_command(message: Message, ui_state, reply_menu_users):
     await _ensure_bottom_menu(message, reply_menu_users)
-    await send_or_update_hub(message, WELCOME_TEXT, main_menu_keyboard(), ui_state)
+    await send_or_update_hub(message, WELCOME_TEXT, None, ui_state)
 
 
 @router.message(Command("help"))
 async def help_command(message: Message, ui_state, reply_menu_users):
     await _ensure_bottom_menu(message, reply_menu_users)
-    await send_or_update_hub(message, HELP_TEXT, main_menu_keyboard(), ui_state)
+    await send_or_update_hub(message, HELP_TEXT, None, ui_state)
 
 
 @router.message(F.text == "Фото")
@@ -104,7 +103,7 @@ async def menu_survey_button(message: Message, ui_state, reply_menu_users):
 @router.message(F.text == "Помощь")
 async def menu_help_button(message: Message, ui_state, reply_menu_users):
     await _ensure_bottom_menu(message, reply_menu_users)
-    await send_or_update_hub(message, HELP_TEXT, main_menu_keyboard(), ui_state)
+    await send_or_update_hub(message, HELP_TEXT, None, ui_state)
 
 
 @router.message()
@@ -113,20 +112,20 @@ async def fallback_message(message: Message, ui_state, reply_menu_users):
     await send_or_update_hub(
         message,
         "Я тут, но лучше выбрать раздел в меню 🙂",
-        main_menu_keyboard(),
+        None,
         ui_state,
     )
 
 
 @router.callback_query(F.data == "menu:main")
 async def menu_main(call: CallbackQuery, ui_state):
-    await edit_or_send(call, WELCOME_TEXT, main_menu_keyboard(), ui_state)
+    await edit_or_send(call, WELCOME_TEXT, None, ui_state)
     await call.answer()
 
 
 @router.callback_query(F.data == "menu:help")
 async def menu_help(call: CallbackQuery, ui_state):
-    await edit_or_send(call, HELP_TEXT, main_menu_keyboard(), ui_state)
+    await edit_or_send(call, HELP_TEXT, None, ui_state)
     await call.answer()
 
 

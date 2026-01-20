@@ -33,7 +33,9 @@ async def translate_text(session, settings, cache, text, target_language="ru"):
     if not result:
         return None
 
-    translated = result[0][0][0] if result else None
+    translated = None
+    if result and isinstance(result, list) and result[0]:
+        translated = "".join(part[0] for part in result[0] if part and part[0])
     if translated:
         await cache.set(cache_key, translated, ttl=600)
     return translated

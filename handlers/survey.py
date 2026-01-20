@@ -6,7 +6,7 @@ from aiogram.types import CallbackQuery, Message
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 
-from handlers.keyboards import survey_keyboard, main_menu_keyboard, back_to_menu_keyboard
+from handlers.keyboards import survey_keyboard
 from handlers.ui import edit_or_send, send_or_update_hub
 
 
@@ -49,7 +49,7 @@ async def survey_rate(call: CallbackQuery, ui_state):
     await edit_or_send(
         call,
         "Спасибо! Хочешь еще что-то посмотреть?\n────────",
-        back_to_menu_keyboard(),
+        None,
         ui_state,
     )
     await call.answer()
@@ -61,7 +61,7 @@ async def survey_comment(call: CallbackQuery, state: FSMContext, ui_state):
     await edit_or_send(
         call,
         "💬 Напиши отзыв одним сообщением.\n────────",
-        back_to_menu_keyboard(),
+        None,
         ui_state,
     )
     await call.answer()
@@ -78,7 +78,7 @@ async def handle_comment(message: Message, state: FSMContext):
     await state.clear()
     await message.answer(
         "Спасибо за отзыв! 🐾",
-        reply_markup=main_menu_keyboard(),
+        reply_markup=None,
     )
 
 

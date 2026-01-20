@@ -2,18 +2,6 @@ from aiogram.types import InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardBut
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 
-def main_menu_keyboard() -> InlineKeyboardMarkup:
-    builder = InlineKeyboardBuilder()
-    builder.button(text="📸 Фото", callback_data="menu:photos")
-    builder.button(text="📚 Факты", callback_data="menu:facts")
-    builder.button(text="✨ Настроение", callback_data="menu:fun")
-    builder.button(text="🧼 Уход", callback_data="menu:useful")
-    builder.button(text="⭐ Оценить", callback_data="survey:open")
-    builder.button(text="ℹ️ Как пользоваться", callback_data="menu:help")
-    builder.adjust(2, 2, 2)
-    return builder.as_markup()
-
-
 def photos_menu_keyboard() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.button(text="Манечка", callback_data="photo:manechka")
@@ -54,8 +42,7 @@ def facts_nav_keyboard(has_prev: bool, has_next: bool) -> InlineKeyboardMarkup:
         text="➡️",
         callback_data="facts:next" if has_next else "noop",
     )
-    builder.button(text="⬅️ В меню", callback_data="menu:main")
-    builder.adjust(3, 1)
+    builder.adjust(3)
     return builder.as_markup()
 
 
@@ -63,7 +50,6 @@ def survey_keyboard() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.button(text="⭐ Поставить оценку", callback_data="survey:rate")
     builder.button(text="💬 Оставить отзыв", callback_data="survey:comment")
-    builder.button(text="⬅️ В меню", callback_data="menu:main")
     builder.adjust(1)
     return builder.as_markup()
 
@@ -86,24 +72,17 @@ def zodiac_keyboard() -> InlineKeyboardMarkup:
     ]
     for sign, callback in zodiac_signs:
         builder.button(text=sign, callback_data=f"zodiac:{callback}")
-    builder.button(text="⬅️ В меню", callback_data="menu:main")
-    builder.adjust(3, 3, 3, 3, 1)
+    builder.adjust(3, 3, 3, 3)
     return builder.as_markup()
 
 
 def action_menu_keyboard(action_text: str, action_data: str) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.button(text=action_text, callback_data=action_data)
-    builder.button(text="⬅️ В меню", callback_data="menu:main")
     builder.adjust(1)
     return builder.as_markup()
 
 
-def back_to_menu_keyboard() -> InlineKeyboardMarkup:
-    builder = InlineKeyboardBuilder()
-    builder.button(text="⬅️ В меню", callback_data="menu:main")
-    builder.adjust(1)
-    return builder.as_markup()
 
 
 def bottom_menu_keyboard() -> ReplyKeyboardMarkup:
