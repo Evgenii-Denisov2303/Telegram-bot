@@ -1,15 +1,3 @@
-from aiogram.exceptions import TelegramBadRequest
-
-
-async def edit_or_send(call, text, markup, ui_state):
-    try:
-        await call.message.edit_text(text, reply_markup=markup)
-        ui_state[call.from_user.id] = call.message.message_id
-    except TelegramBadRequest:
-        sent = await call.message.answer(text, reply_markup=markup)
-        ui_state[call.from_user.id] = sent.message_id
-
-
 async def send_or_update_hub(message, text, markup, ui_state):
     chat_id = message.chat.id
     message_id = ui_state.get(message.from_user.id)

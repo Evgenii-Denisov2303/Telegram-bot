@@ -1,22 +1,19 @@
 from aiogram import Router, F
 from aiogram.types import CallbackQuery
 
-from handlers.keyboards import useful_menu_keyboard
-from handlers.ui import edit_or_send
+from handlers.keyboards import action_menu_keyboard
 
 
 router = Router()
 
 
 @router.callback_query(F.data == "useful:advice")
-async def useful_advice(call: CallbackQuery, ui_state):
-    await edit_or_send(
-        call,
+async def useful_advice(call: CallbackQuery):
+    await call.message.answer(
         "😽 <b>Как гладить котика</b>\n"
         "────────\n"
         "Короткая статья и советы:\n"
         "https://www.feliway.com/ru/Nash-blog/Kak-pravil-no-gladit-koshku/",
-        useful_menu_keyboard(),
-        ui_state,
+        reply_markup=action_menu_keyboard("Еще полезное", "menu:useful"),
     )
     await call.answer()

@@ -76,9 +76,15 @@ def zodiac_keyboard() -> InlineKeyboardMarkup:
     return builder.as_markup()
 
 
-def action_menu_keyboard(action_text: str, action_data: str) -> InlineKeyboardMarkup:
+def action_menu_keyboard(
+    action_text: str,
+    action_data: str,
+    include_menu: bool = True,
+) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.button(text=action_text, callback_data=action_data)
+    if include_menu:
+        builder.button(text="⬅️ В меню", callback_data="menu:main")
     builder.adjust(1)
     return builder.as_markup()
 

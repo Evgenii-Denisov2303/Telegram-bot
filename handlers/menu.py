@@ -8,7 +8,7 @@ from handlers.keyboards import (
     bottom_menu_keyboard,
     survey_keyboard,
 )
-from handlers.ui import edit_or_send, send_or_update_hub
+from handlers.ui import send_or_update_hub
 
 
 router = Router()
@@ -119,44 +119,38 @@ async def fallback_message(message: Message, ui_state, reply_menu_users):
 
 @router.callback_query(F.data == "menu:main")
 async def menu_main(call: CallbackQuery, ui_state):
-    await edit_or_send(call, WELCOME_TEXT, None, ui_state)
+    await call.message.answer(WELCOME_TEXT)
     await call.answer()
 
 
 @router.callback_query(F.data == "menu:help")
 async def menu_help(call: CallbackQuery, ui_state):
-    await edit_or_send(call, HELP_TEXT, None, ui_state)
+    await call.message.answer(HELP_TEXT)
     await call.answer()
 
 
 @router.callback_query(F.data == "menu:photos")
 async def menu_photos(call: CallbackQuery, ui_state):
-    await edit_or_send(
-        call,
+    await call.message.answer(
         "📸 <b>Фото котиков</b>\nВыбери любимчика или нажми случайный кадр.\n────────",
-        photos_menu_keyboard(),
-        ui_state,
+        reply_markup=photos_menu_keyboard(),
     )
     await call.answer()
 
 
 @router.callback_query(F.data == "menu:fun")
 async def menu_fun(call: CallbackQuery, ui_state):
-    await edit_or_send(
-        call,
+    await call.message.answer(
         "✨ <b>Настроение</b>\nХочешь комплимент, гороскоп или игру?\n────────",
-        fun_menu_keyboard(),
-        ui_state,
+        reply_markup=fun_menu_keyboard(),
     )
     await call.answer()
 
 
 @router.callback_query(F.data == "menu:useful")
 async def menu_useful(call: CallbackQuery, ui_state):
-    await edit_or_send(
-        call,
+    await call.message.answer(
         "🧼 <b>Уход за котиками</b>\nКороткий, добрый совет.\n────────",
-        useful_menu_keyboard(),
-        ui_state,
+        reply_markup=useful_menu_keyboard(),
     )
     await call.answer()

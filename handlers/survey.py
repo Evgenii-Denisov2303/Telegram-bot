@@ -7,7 +7,7 @@ from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 
 from handlers.keyboards import survey_keyboard
-from handlers.ui import edit_or_send, send_or_update_hub
+from handlers.ui import send_or_update_hub
 
 
 router = Router()
@@ -29,11 +29,9 @@ async def survey_command(message: Message, ui_state):
 
 @router.callback_query(F.data == "survey:open")
 async def survey_open(call: CallbackQuery, ui_state):
-    await edit_or_send(
-        call,
+    await call.message.answer(
         "⭐ <b>Оценка</b>\n────────\nОцени бота или оставь отзыв.",
-        survey_keyboard(),
-        ui_state,
+        reply_markup=survey_keyboard(),
     )
     await call.answer()
 
@@ -46,24 +44,14 @@ async def survey_rate(call: CallbackQuery, ui_state):
         is_anonymous=False,
         allows_multiple_answers=False,
     )
-    await edit_or_send(
-        call,
-        "Спасибо! Хочешь еще что-то посмотреть?\n────────",
-        None,
-        ui_state,
-    )
+    await call.message.answer("Спасибо! Хочешь еще что-то посмотреть?\n────────")
     await call.answer()
 
 
 @router.callback_query(F.data == "survey:comment")
 async def survey_comment(call: CallbackQuery, state: FSMContext, ui_state):
     await state.set_state(CommentState.waiting_for_comment)
-    await edit_or_send(
-        call,
-        "💬 Напиши отзыв одним сообщением.\n────────",
-        None,
-        ui_state,
-    )
+    await call.message.answer("💬 Напиши отзыв одним сообщением.\n────────")
     await call.answer()
 
 
