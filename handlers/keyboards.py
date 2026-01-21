@@ -89,15 +89,16 @@ def action_menu_keyboard(
     return builder.as_markup()
 
 
-
-
 def bottom_menu_keyboard() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[
-            [KeyboardButton(text="Фото"), KeyboardButton(text="Факты")],
-            [KeyboardButton(text="Настроение"), KeyboardButton(text="Уход")],
-            [KeyboardButton(text="Оценить"), KeyboardButton(text="Помощь")],
+            [KeyboardButton(text="Фото"), KeyboardButton(text="Настроение")],
+            [KeyboardButton(text="Факты"), KeyboardButton(text="Уход")],
+            [KeyboardButton(text="Помощь"), KeyboardButton(text="Оценить")],
         ],
         resize_keyboard=True,
+        one_time_keyboard=False,
+        input_field_placeholder="Выбери раздел кнопками ниже 👇",
         selective=False,
+        is_persistent=True,  # <- важно: просим Telegram держать клавиатуру
     )
