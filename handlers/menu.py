@@ -41,19 +41,19 @@ def _ensure_bottom_menu(message: Message, reply_menu_users: set):
 @router.message(CommandStart())
 async def start_command(message: Message, ui_state, reply_menu_users):
     reply_keyboard = _ensure_bottom_menu(message, reply_menu_users)
-    await send_or_update_hub(message, WELCOME_TEXT, None, ui_state, reply_keyboard=reply_keyboard)
+    await send_or_update_hub(message, WELCOME_TEXT, None, ui_state, reply_keyboard=reply_keyboard, repost=True)
 
 
 @router.message(Command("menu"))
 async def menu_command(message: Message, ui_state, reply_menu_users):
     reply_keyboard = _ensure_bottom_menu(message, reply_menu_users)
-    await send_or_update_hub(message, WELCOME_TEXT, None, ui_state, reply_keyboard=reply_keyboard)
+    await send_or_update_hub(message, WELCOME_TEXT, None, ui_state, reply_keyboard=reply_keyboard, repost=True)
 
 
 @router.message(Command("help"))
 async def help_command(message: Message, ui_state, reply_menu_users):
     reply_keyboard = _ensure_bottom_menu(message, reply_menu_users)
-    await send_or_update_hub(message, HELP_TEXT, None, ui_state, reply_keyboard=reply_keyboard)
+    await send_or_update_hub(message, HELP_TEXT, None, ui_state, reply_keyboard=reply_keyboard, repost=True)
 
 
 @router.message(F.text == "Фото")
@@ -63,7 +63,7 @@ async def menu_photos_button(message: Message, ui_state, reply_menu_users):
         message,
         "📸 <b>Фото котиков</b>\nВыбери любимчика или нажми случайный кадр.\n────────",
         photos_menu_keyboard(),
-        ui_state,
+        ui_state, repost=True
     )
 
 
@@ -74,7 +74,7 @@ async def menu_fun_button(message: Message, ui_state, reply_menu_users):
         message,
         "✨ <b>Настроение</b>\nХочешь комплимент, гороскоп или игру?\n────────",
         fun_menu_keyboard(),
-        ui_state,
+        ui_state, repost=True
     )
 
 
@@ -85,7 +85,7 @@ async def menu_useful_button(message: Message, ui_state, reply_menu_users):
         message,
         "🧼 <b>Уход за котиками</b>\nКороткий, добрый совет.\n────────",
         useful_menu_keyboard(),
-        ui_state,
+        ui_state, repost=True
     )
 
 
@@ -96,14 +96,14 @@ async def menu_survey_button(message: Message, ui_state, reply_menu_users):
         message,
         "⭐ <b>Оценка</b>\n────────\nОцени бота или оставь отзыв.",
         survey_keyboard(),
-        ui_state,
+        ui_state, repost=True
     )
 
 
 @router.message(F.text == "Помощь")
 async def menu_help_button(message: Message, ui_state, reply_menu_users):
     reply_keyboard = _ensure_bottom_menu(message, reply_menu_users)
-    await send_or_update_hub(message, HELP_TEXT, None, ui_state, reply_keyboard=reply_keyboard)
+    await send_or_update_hub(message, HELP_TEXT, None, ui_state, reply_keyboard=reply_keyboard, repost=True)
 
 
 @router.message()
@@ -114,7 +114,7 @@ async def fallback_message(message: Message, ui_state, reply_menu_users):
         "Я тут, но лучше выбрать раздел в меню 🙂",
         None,
         ui_state,
-        reply_keyboard=reply_keyboard,
+        reply_keyboard=reply_keyboard, repost=True
     )
 
 
