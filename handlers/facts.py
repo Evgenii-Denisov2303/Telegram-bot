@@ -11,60 +11,81 @@ from utils.concurrency import acquire_or_notify
 
 
 router = Router()
+
 MAX_FACTS_PER_USER = 80
 
 FACTS_HUB_TEXT = (
     "📚 <b>Факты</b>\n"
-    "Жми «Новый», чтобы получать факты. Можно листать «Назад/Дальше».\n"
+    "Нажимай «Новый», чтобы получать факты.\n"
     "────────"
 )
 
 
+# ---------- helpers ----------
+
 def _format_fact(original: str, translation: str | None) -> str:
-    header = "🧠 <b>Кошачий факт</b>"
     if not translation:
         return (
-            f"{header}\n────────\n"
+            "🧠 <b>Кошачий факт</b>\n"
+            "────────\n"
             f"🇬🇧 {original}\n\n"
-            "❌ Перевод временно недоступен"
+            "❌ Перевод недоступен"
         )
-    return f"{header}\n────────\n🇬🇧 {original}\n\n🇷🇺 {translation}"
-
-
-async def _send_fact_and_hub(message: Message, facts: list, current_index: int, ui_state):
-    current = facts[current_index]
-    fact_text = current.get("display_text") or _format_fact(
-        current.get("text", ""), current.get("translation")
+    return (
+        "🧠 <b>Кошачий факт</b>\n"
+        "────────\n"
+        f"🇬🇧 {original}\n\n"
+        f"🇷🇺 {translation}"
     )
 
-    # 1) Факт — отдельным сообщением снизу
-    await message.answer(fact_text)
 
-    # 2) Хаб/меню — отдельным сообщением снизу (как в fun.py)
-    markup = facts_nav_keyboard(
-        has_prev=current_index > 0,
-        has_next=current_index < len(facts) - 1,
-    )
+async def _send_fact_and_menu(
+    message: Message,
+    facts: list,
+    index: int,
+    ui_state,
+):
+    fact_data = facts[index]
+    text = fact_data["display_text"]
+
+    # 1) факт — новым сообщением (внизу)
+    await message.answer(text)
+
+    # 2) хаб/меню фактов — тоже вниз
     await send_or_update_hub(
         message,
         FACTS_HUB_TEXT,
-        markup,
+        facts_nav_keyboard(
+            has_prev=index > 0,
+            has_next=index < len(facts) - 1,
+        ),
         ui_state,
         repost=True,
     )
 
 
+# ---------- menu entry ----------
+
 @router.callback_query(F.data == "menu:facts")
-async def menu_facts(call: CallbackQuery, session, settings, cache, semaphore, ui_state):
+async def menu_facts(
+    call: CallbackQuery,
+    session,
+    settings,
+    cache,
+    semaphore,
+    ui_state,
+):
     if not await acquire_or_notify(semaphore, call):
         return
+
     try:
         fact = await fetch_cat_fact(session, settings, cache)
         if not fact:
-            await call.message.answer("Не удалось получить факт. Попробуй чуть позже.")
-            await call.answer()
+            await call.answer("Не удалось получить факт.", show_alert=True)
             return
+
         translation = await translate_text(session, settings, cache, fact)
+
     finally:
         semaphore.release()
 
@@ -72,31 +93,50 @@ async def menu_facts(call: CallbackQuery, session, settings, cache, semaphore, u
 
     data = await get_user_facts(call.from_user.id)
     facts = data["facts"]
-    facts.append({"text": fact, "translation": translation, "display_text": display_text})
+
+    facts.append(
+        {
+            "text": fact,
+            "translation": translation,
+            "display_text": display_text,
+        }
+    )
+
     if len(facts) > MAX_FACTS_PER_USER:
-        facts = facts[-MAX_FACTS_PER_USER:]
-    current_index = len(facts) - 1
+        facts = facts[-MAX_FACTS_PER_USER :]
 
-    await update_user_facts(call.from_user.id, facts, current_index)
+    index = len(facts) - 1
 
-    await _send_fact_and_hub(call.message, facts, current_index, ui_state)
+    await update_user_facts(call.from_user.id, facts, index)
+    await _send_fact_and_menu(call.message, facts, index, ui_state)
     await call.answer()
 
 
+# ---------- reply keyboard entry ----------
+
 @router.message(F.text == "Факты")
-async def menu_facts_message(message: Message, session, settings, cache, semaphore, ui_state):
+async def menu_facts_message(
+    message: Message,
+    session,
+    settings,
+    cache,
+    semaphore,
+    ui_state,
+):
     try:
-        await asyncio.wait_for(semaphore.acquire(), timeout=0.1)
+        await asyncio.wait_for(semaphore.acquire(), timeout=0.2)
     except asyncio.TimeoutError:
-        await message.answer("Я чуть занят. Попробуй ещё раз через пару секунд 🙂")
+        await message.answer("Я чуть занят 😺 Попробуй снова.")
         return
 
     try:
         fact = await fetch_cat_fact(session, settings, cache)
         if not fact:
-            await message.answer("Не удалось получить факт. Попробуй чуть позже.")
+            await message.answer("Не удалось получить факт.")
             return
+
         translation = await translate_text(session, settings, cache, fact)
+
     finally:
         semaphore.release()
 
@@ -104,65 +144,56 @@ async def menu_facts_message(message: Message, session, settings, cache, semapho
 
     data = await get_user_facts(message.from_user.id)
     facts = data["facts"]
-    facts.append({"text": fact, "translation": translation, "display_text": display_text})
+
+    facts.append(
+        {
+            "text": fact,
+            "translation": translation,
+            "display_text": display_text,
+        }
+    )
+
     if len(facts) > MAX_FACTS_PER_USER:
-        facts = facts[-MAX_FACTS_PER_USER:]
-    current_index = len(facts) - 1
+        facts = facts[-MAX_FACTS_PER_USER :]
 
-    await update_user_facts(message.from_user.id, facts, current_index)
+    index = len(facts) - 1
 
-    await _send_fact_and_hub(message, facts, current_index, ui_state)
+    await update_user_facts(message.from_user.id, facts, index)
+    await _send_fact_and_menu(message, facts, index, ui_state)
 
+
+# ---------- navigation ----------
 
 @router.callback_query(F.data.in_({"facts:new", "facts:prev", "facts:next"}))
-async def facts_nav(call: CallbackQuery, session, settings, cache, semaphore, ui_state):
+async def facts_nav(
+    call: CallbackQuery,
+    session,
+    settings,
+    cache,
+    semaphore,
+    ui_state,
+):
     data = await get_user_facts(call.from_user.id)
     facts = data["facts"]
-    current_index = data["current_index"]
+    index = data["current_index"]
 
     if call.data == "facts:new":
         if not await acquire_or_notify(semaphore, call):
             return
+
         try:
             fact = await fetch_cat_fact(session, settings, cache)
             if not fact:
                 await call.answer("Не удалось получить факт.", show_alert=True)
                 return
+
             translation = await translate_text(session, settings, cache, fact)
+
         finally:
             semaphore.release()
 
         display_text = _format_fact(fact, translation)
-        facts.append({"text": fact, "translation": translation, "display_text": display_text})
-        if len(facts) > MAX_FACTS_PER_USER:
-            facts = facts[-MAX_FACTS_PER_USER:]
-        current_index = len(facts) - 1
 
-    elif call.data == "facts:prev" and current_index > 0:
-        current_index -= 1
-
-    elif call.data == "facts:next" and current_index < len(facts) - 1:
-        current_index += 1
-
-    if not facts:
-        await call.message.answer("Фактов пока нет. Нажми «Новый».")
-        await call.answer()
-        return
-
-    await update_user_facts(call.from_user.id, facts, current_index)
-    await _send_fact_and_hub(call.message, facts, current_index, ui_state)
-    await call.answer()
-
-
-@router.callback_query(F.data == "noop")
-async def noop(call: CallbackQuery):
-    await call.answer()
-                await call.answer("Не удалось получить факт.", show_alert=True)
-                return
-            translation = await translate_text(session, settings, cache, fact)
-        finally:
-            semaphore.release()
-        display_text = _format_fact(fact, translation)
         facts.append(
             {
                 "text": fact,
@@ -170,24 +201,23 @@ async def noop(call: CallbackQuery):
                 "display_text": display_text,
             }
         )
+
         if len(facts) > MAX_FACTS_PER_USER:
-            facts = facts[-MAX_FACTS_PER_USER:]
-        current_index = len(facts) - 1
-    elif call.data == "facts:prev" and current_index > 0:
-        current_index -= 1
-    elif call.data == "facts:next" and current_index < len(facts) - 1:
-        current_index += 1
+            facts = facts[-MAX_FACTS_PER_USER :]
+
+        index = len(facts) - 1
+
+    elif call.data == "facts:prev" and index > 0:
+        index -= 1
+
+    elif call.data == "facts:next" and index < len(facts) - 1:
+        index += 1
 
     if not facts:
         await call.message.answer("Фактов пока нет. Нажми «Новый».")
         await call.answer()
         return
 
-    await update_user_facts(call.from_user.id, facts, current_index)
-    await _show_fact(call, facts, current_index)
-    await call.answer()
-
-
-@router.callback_query(F.data == "noop")
-async def noop(call: CallbackQuery):
+    await update_user_facts(call.from_user.id, facts, index)
+    await _send_fact_and_menu(call.message, facts, index, ui_state)
     await call.answer()
