@@ -8,10 +8,10 @@ from .menu import router as menu_router
 
 def get_routers():
     return [
+        menu_router, 
         facts_router,
         photos_router,
         fun_router,
         survey_router,
         useful_router,
-        menu_router,
     ]
