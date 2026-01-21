@@ -6,7 +6,7 @@ from handlers.keyboards import (
     fun_menu_keyboard,
     useful_menu_keyboard,
     bottom_menu_keyboard,
-    survey_keyboard,Сделай аргрейд
+    survey_keyboard,
 )
 from handlers.ui import send_or_update_hub
 
