@@ -34,7 +34,7 @@ async def _show_reply_menu(message: Message) -> None:
     Важно: только sendMessage реально “включает” ReplyKeyboard,
     editMessageText этого не делает.
     """
-    await message.answer("\u200b", reply_markup=bottom_menu_keyboard())
+    await message.answer(" ", reply_markup=bottom_menu_keyboard())
 
 
 # ---------------- Commands ----------------

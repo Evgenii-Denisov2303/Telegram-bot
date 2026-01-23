@@ -39,7 +39,7 @@ async def send_or_update_hub(
     # 1) Wake ReplyKeyboard reliably (only sendMessage can show it)
     if reply_keyboard is not None:
         try:
-            await message.answer("\u200b", reply_markup=reply_keyboard)
+            await message.answer(" ", reply_markup=reply_keyboard)
         except Exception:
             pass
 
