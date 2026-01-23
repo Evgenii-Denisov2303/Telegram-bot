@@ -161,7 +161,7 @@ async def cb_menu_useful(call: CallbackQuery, ui_state):
 
 # ---------------- Fallback ----------------
 
-@router.message()
+@router.message(~F.text.in_({"Фото", "Настроение", "Факты", "Уход", "Помощь", "Оценить"}))
 async def fallback(message: Message):
     # На любое непонятное сообщение — возвращаем клавиатуру
     await _show_reply_menu(message)
