@@ -83,14 +83,6 @@ async def btn_fun(message: Message, ui_state):
     )
 
 
-@router.message(F.text == "Факты")
-async def btn_facts(message: Message, ui_state):
-    # ВАЖНО: сами факты обрабатываются в handlers/facts.py
-    # Здесь просто гарантированно возвращаем клавиатуру и подсказываем.
-    await _show_reply_menu(message)
-    await message.answer("Нажми «Факты» ещё раз или используй кнопки внутри раздела 🙂")
-
-
 @router.message(F.text == "Уход")
 async def btn_useful(message: Message, ui_state):
     await _show_reply_menu(message)
@@ -131,6 +123,42 @@ async def cb_menu_main(call: CallbackQuery, ui_state):
     await call.answer()
 
 
+@router.callback_query(F.data == "menu:photos")
+async def cb_menu_photos(call: CallbackQuery, ui_state):
+    await send_or_update_hub(
+        call.message,
+        "📸 <b>Фото котиков</b>\nВыбери котика или нажми 🎲 случайный.\n────────",
+        photos_menu_keyboard(),
+        ui_state,
+        repost=True,
+    )
+    await call.answer()
+
+
+@router.callback_query(F.data == "menu:fun")
+async def cb_menu_fun(call: CallbackQuery, ui_state):
+    await send_or_update_hub(
+        call.message,
+        "✨ <b>Настроение</b>\nГороскоп, комплимент или мини-игра.\n────────",
+        fun_menu_keyboard(),
+        ui_state,
+        repost=True,
+    )
+    await call.answer()
+
+
+@router.callback_query(F.data == "menu:useful")
+async def cb_menu_useful(call: CallbackQuery, ui_state):
+    await send_or_update_hub(
+        call.message,
+        "😽 <b>Уход</b>\nСоветы по котикам.\n────────",
+        useful_menu_keyboard(),
+        ui_state,
+        repost=True,
+    )
+    await call.answer()
+
+
 # ---------------- Fallback ----------------
 
 @router.message()
@@ -138,11 +166,3 @@ async def fallback(message: Message):
     # На любое непонятное сообщение — возвращаем клавиатуру
     await _show_reply_menu(message)
     await message.answer("Нажми кнопки снизу 👇 или напиши /menu")
-
-@router.message()
-async def catch_all_text(message: Message):
-    # Гарантированно возвращаем клавиатуру
-    await message.answer(
-        "Нажми кнопки снизу 👇 или напиши /menu",
-        reply_markup=bottom_menu_keyboard(),
-    )
