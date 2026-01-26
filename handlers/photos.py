@@ -2,6 +2,7 @@ from aiogram import Router, F
 from aiogram.types import CallbackQuery, FSInputFile, InputMediaPhoto
 
 from config_data.config import CAT_PHOTOS
+from handlers.keyboards import action_menu_keyboard
 from services.cat_random_image_api import fetch_random_cat_image
 from utils.concurrency import acquire_or_notify
 from utils.i18n import t, resolve_user_lang
@@ -38,6 +39,12 @@ async def photo_scottish(call: CallbackQuery, ui_state):
 @router.callback_query(F.data == "photo:random")
 async def photo_random(call: CallbackQuery, session, settings, semaphore, ui_state):
     lang = await resolve_user_lang(call.from_user.id, call.from_user.language_code)
+    is_photo_message = bool(call.message.photo)
+    if not is_photo_message:
+        try:
+            await call.message.edit_reply_markup(reply_markup=None)
+        except Exception:
+            pass
     if not await acquire_or_notify(semaphore, call, lang):
         return
     try:
@@ -45,13 +52,45 @@ async def photo_random(call: CallbackQuery, session, settings, semaphore, ui_sta
     finally:
         semaphore.release()
 
+    reply_markup = action_menu_keyboard(
+        t(lang, "btn.more_random"),
+        "photo:random",
+        include_menu=False,
+        lang=lang,
+    )
+
     if image_url:
+        if is_photo_message:
+            try:
+                await call.message.edit_media(
+                    InputMediaPhoto(
+                        media=image_url,
+                        caption=t(lang, "photos.random_caption"),
+                    )
+                )
+                await call.message.edit_reply_markup(reply_markup=reply_markup)
+                await call.answer()
+                return
+            except Exception:
+                pass
         await call.message.answer_photo(
             image_url,
             caption=t(lang, "photos.random_caption"),
+            reply_markup=reply_markup,
         )
     else:
+        if is_photo_message:
+            try:
+                await call.message.edit_caption(
+                    t(lang, "photos.random_error"),
+                    reply_markup=reply_markup,
+                )
+                await call.answer()
+                return
+            except Exception:
+                pass
         await call.message.answer(
             t(lang, "photos.random_error"),
+            reply_markup=reply_markup,
         )
     await call.answer()
