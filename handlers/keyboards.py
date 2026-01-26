@@ -125,9 +125,16 @@ def action_menu_keyboard(
 def bottom_menu_keyboard(lang: str = "ru") -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[
-            [KeyboardButton(text=t(lang, "btn.photos")), KeyboardButton(text=t(lang, "btn.fun"))],
-            [KeyboardButton(text=t(lang, "btn.facts")), KeyboardButton(text=t(lang, "btn.useful"))],
-            [KeyboardButton(text=t(lang, "btn.help")), KeyboardButton(text=t(lang, "btn.rate"))],
+            [
+                KeyboardButton(text=t(lang, "btn.photos")),
+                KeyboardButton(text=t(lang, "btn.fun")),
+                KeyboardButton(text=t(lang, "btn.facts")),
+            ],
+            [
+                KeyboardButton(text=t(lang, "btn.useful")),
+                KeyboardButton(text=t(lang, "btn.help")),
+                KeyboardButton(text=t(lang, "btn.rate")),
+            ],
             [KeyboardButton(text=t(lang, "btn.language"))],
         ],
         resize_keyboard=True,
